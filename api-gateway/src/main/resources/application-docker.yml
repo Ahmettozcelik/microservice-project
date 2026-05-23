@@ -4,18 +4,20 @@ spring:
 
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
 
-      routes:
-        - id: demo-service
-          uri: lb://DEMO-SERVICE
-          predicates:
-            - Path=/demo/**
-          filters:
-            - StripPrefix=1
+          routes:
+            - id: demo-service
+              uri: lb://DEMO-SERVICE
+              predicates:
+                - Path=/demo/**
+              filters:
+                - StripPrefix=1
 
 eureka:
   client:
@@ -23,6 +25,3 @@ eureka:
       defaultZone: http://eureka-server:8761/eureka
     register-with-eureka: true
     fetch-registry: true
-
-  instance:
-    prefer-ip-address: true
