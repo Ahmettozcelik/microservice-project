@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/demo")
 public class DemoController {
 
-    @GetMapping
+    @GetMapping("/hello")
     public String hello() {
         return "Microservice system is running 🚀";
     }
