@@ -4,7 +4,6 @@ pipeline {
     environment {
         IMAGE_TAG = "${GIT_COMMIT.take(7)}"
         COMPOSE = "/usr/local/bin/docker-compose"
-        GATEWAY_URL = "http://localhost:8080/actuator/health"
     }
 
     stages {
