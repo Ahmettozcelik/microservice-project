@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         IMAGE_TAG = "${GIT_COMMIT.take(7)}"
-        COMPOSE = "/usr/local/bin/docker-compose"
     }
 
     stages {
@@ -15,10 +14,16 @@ pipeline {
         }
 
         stage('Build Maven Services') {
+            agent {
+                docker {
+                    image 'maven:3.9.6-eclipse-temurin-21'
+                }
+            }
             steps {
                 sh '''
                     set -e
 
+                    mvn -v
                     cd eureka-server && mvn clean package -DskipTests
                     cd ../config-server && mvn clean package -DskipTests
                     cd ../demo-service && mvn clean package -DskipTests
@@ -45,11 +50,8 @@ pipeline {
                 sh '''
                     set -e
 
-                    echo "Stopping previous containers..."
-                    $COMPOSE down || true
-
-                    echo "Starting new version: ${IMAGE_TAG}"
-                    $COMPOSE up -d --build
+                    docker compose down || true
+                    docker compose up -d
                 '''
             }
         }
@@ -57,34 +59,31 @@ pipeline {
         stage('Health Check') {
             steps {
                 sh '''
-                    echo "Waiting services to start..."
-                    sleep 20
+                    echo "Waiting services..."
+                    sleep 30
 
-                    echo "Checking Gateway health..."
-
-                    curl -f $GATEWAY_URL || (
-                        echo "Health check failed! Triggering rollback..."
-                        exit 1
-                    )
+                    curl -f http://localhost:8080/actuator/health || exit 1
                 '''
             }
         }
     }
 
     post {
-
         success {
-            echo "SUCCESS 🚀 Deployment completed - ${IMAGE_TAG}"
+            echo "SUCCESS 🚀 ${IMAGE_TAG}"
         }
 
         failure {
-            echo "FAILED ❌ Rolling back..."
+            echo "FAILED ❌ rollback..."
 
             sh '''
-                set +e
-                $COMPOSE down
-                $COMPOSE up -d
+                docker compose down
+                docker compose up -d
             '''
+        }
+
+        always {
+            cleanWs()
         }
     }
 }
