@@ -5,9 +5,5 @@ spring:
   application:
     name: demo-service
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-  instance:
-    prefer-ip-address: true # Gateway'in bilgisayar adı yerine doğrudan IP ile bağlanmasını sağlar
+  profiles:
+    active: local
