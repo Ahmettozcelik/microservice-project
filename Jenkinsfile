@@ -2,14 +2,20 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG = "${GIT_COMMIT.take(7)}"
+        IMAGE_TAG = "${env.GIT_COMMIT?.take(7) ?: 'latest'}"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
+                deleteDir()
                 checkout scm
+
+                sh '''
+                    echo "=== WORKSPACE STRUCTURE ==="
+                    ls -R
+                '''
             }
         }
 
@@ -18,29 +24,31 @@ pipeline {
                 sh '''
                     set -e
 
-                    docker run --rm \
-                      -v $WORKSPACE:/app \
-                      -w /app \
-                      maven:3.9.6-eclipse-temurin-21 \
-                      mvn -f eureka-server/pom.xml clean package -DskipTests
+                    mvn_cmd="mvn -B -DskipTests clean package"
 
                     docker run --rm \
                       -v $WORKSPACE:/app \
                       -w /app \
                       maven:3.9.6-eclipse-temurin-21 \
-                      mvn -f config-server/pom.xml clean package -DskipTests
+                      $mvn_cmd -f eureka-server/pom.xml
 
                     docker run --rm \
                       -v $WORKSPACE:/app \
                       -w /app \
                       maven:3.9.6-eclipse-temurin-21 \
-                      mvn -f demo-service/pom.xml clean package -DskipTests
+                      $mvn_cmd -f config-server/pom.xml
 
                     docker run --rm \
                       -v $WORKSPACE:/app \
                       -w /app \
                       maven:3.9.6-eclipse-temurin-21 \
-                      mvn -f api-gateway/pom.xml clean package -DskipTests
+                      $mvn_cmd -f demo-service/pom.xml
+
+                    docker run --rm \
+                      -v $WORKSPACE:/app \
+                      -w /app \
+                      maven:3.9.6-eclipse-temurin-21 \
+                      $mvn_cmd -f api-gateway/pom.xml
                 '''
             }
         }
@@ -63,8 +71,8 @@ pipeline {
                 sh '''
                     set -e
 
-                    docker-compose down || true
-                    docker-compose up -d --build
+                    docker compose down || true
+                    docker compose up -d --build
                 '''
             }
         }
@@ -84,15 +92,15 @@ pipeline {
     post {
 
         success {
-            echo "SUCCESS 🚀 ${IMAGE_TAG}"
+            echo "SUCCESS 🚀 IMAGE: ${IMAGE_TAG}"
         }
 
         failure {
-            echo "FAILED ❌ rollback..."
+            echo "FAILED ❌ rolling back..."
 
             sh '''
-                docker-compose down
-                docker-compose up -d
+                docker compose down || true
+                docker compose up -d
             '''
         }
 
