@@ -13,42 +13,23 @@ pipeline {
                 checkout scm
 
                 sh '''
-                    echo "=== WORKSPACE STRUCTURE ==="
+                    echo "=== WORKSPACE ==="
                     ls -R
                 '''
             }
         }
 
-        stage('Build Maven Services') {
+        stage('Build Maven') {
             steps {
                 sh '''
                     set -e
 
-                    mvn_cmd="mvn -B -DskipTests clean package"
+                    echo "Building all services with local Maven wrapper..."
 
-                    docker run --rm \
-                      -v $WORKSPACE:/app \
-                      -w /app \
-                      maven:3.9.6-eclipse-temurin-21 \
-                      $mvn_cmd -f eureka-server/pom.xml
-
-                    docker run --rm \
-                      -v $WORKSPACE:/app \
-                      -w /app \
-                      maven:3.9.6-eclipse-temurin-21 \
-                      $mvn_cmd -f config-server/pom.xml
-
-                    docker run --rm \
-                      -v $WORKSPACE:/app \
-                      -w /app \
-                      maven:3.9.6-eclipse-temurin-21 \
-                      $mvn_cmd -f demo-service/pom.xml
-
-                    docker run --rm \
-                      -v $WORKSPACE:/app \
-                      -w /app \
-                      maven:3.9.6-eclipse-temurin-21 \
-                      $mvn_cmd -f api-gateway/pom.xml
+                    cd eureka-server && ./mvnw clean package -DskipTests && cd ..
+                    cd config-server && ./mvnw clean package -DskipTests && cd ..
+                    cd demo-service && ./mvnw clean package -DskipTests && cd ..
+                    cd api-gateway && ./mvnw clean package -DskipTests && cd ..
                 '''
             }
         }
@@ -92,11 +73,11 @@ pipeline {
     post {
 
         success {
-            echo "SUCCESS 🚀 IMAGE: ${IMAGE_TAG}"
+            echo "SUCCESS 🚀 ${IMAGE_TAG}"
         }
 
         failure {
-            echo "FAILED ❌ rolling back..."
+            echo "FAILED ❌ rollback..."
 
             sh '''
                 docker compose down || true
