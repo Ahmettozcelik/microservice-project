@@ -1,16 +1,11 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_TAG = "latest"
-    }
-
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Ahmettozcelik/microservice-project.git'
+                git url: 'https://github.com/Ahmettozcelik/microservice-project.git', branch: 'main'
             }
         }
 
@@ -32,14 +27,9 @@ pipeline {
             }
         }
 
-        stage('Stop Old Containers') {
-            steps {
-                sh 'docker compose down || true'
-            }
-        }
-
         stage('Deploy') {
             steps {
+                sh 'docker compose down || true'
                 sh 'docker compose up -d --build'
             }
         }
