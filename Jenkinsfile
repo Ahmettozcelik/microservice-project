@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE_TAG = "latest"
+        COMPOSE = "/usr/local/bin/docker-compose"
     }
 
     stages {
@@ -36,13 +37,13 @@ pipeline {
         }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                    docker compose down || true
-                    docker compose up -d --build
-                '''
-            }
-        }
+                    steps {
+                        sh '''
+                            $COMPOSE down || true
+                            $COMPOSE up -d --build
+                        '''
+                    }
+                }
     }
 
     post {
