@@ -14,20 +14,33 @@ pipeline {
         }
 
         stage('Build Maven Services') {
-            agent {
-                docker {
-                    image 'maven:3.9.6-eclipse-temurin-21'
-                }
-            }
             steps {
                 sh '''
                     set -e
 
-                    mvn -v
-                    cd eureka-server && mvn clean package -DskipTests
-                    cd ../config-server && mvn clean package -DskipTests
-                    cd ../demo-service && mvn clean package -DskipTests
-                    cd ../api-gateway && mvn clean package -DskipTests
+                    docker run --rm \
+                      -v $WORKSPACE:/app \
+                      -w /app \
+                      maven:3.9.6-eclipse-temurin-21 \
+                      mvn -f eureka-server/pom.xml clean package -DskipTests
+
+                    docker run --rm \
+                      -v $WORKSPACE:/app \
+                      -w /app \
+                      maven:3.9.6-eclipse-temurin-21 \
+                      mvn -f config-server/pom.xml clean package -DskipTests
+
+                    docker run --rm \
+                      -v $WORKSPACE:/app \
+                      -w /app \
+                      maven:3.9.6-eclipse-temurin-21 \
+                      mvn -f demo-service/pom.xml clean package -DskipTests
+
+                    docker run --rm \
+                      -v $WORKSPACE:/app \
+                      -w /app \
+                      maven:3.9.6-eclipse-temurin-21 \
+                      mvn -f api-gateway/pom.xml clean package -DskipTests
                 '''
             }
         }
@@ -50,8 +63,8 @@ pipeline {
                 sh '''
                     set -e
 
-                    docker compose down || true
-                    docker compose up -d
+                    docker-compose down || true
+                    docker-compose up -d --build
                 '''
             }
         }
@@ -69,6 +82,7 @@ pipeline {
     }
 
     post {
+
         success {
             echo "SUCCESS 🚀 ${IMAGE_TAG}"
         }
@@ -77,8 +91,8 @@ pipeline {
             echo "FAILED ❌ rollback..."
 
             sh '''
-                docker compose down
-                docker compose up -d
+                docker-compose down
+                docker-compose up -d
             '''
         }
 
