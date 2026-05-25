@@ -4,17 +4,13 @@ spring:
       discovery:
         locator:
           enabled: true
-
       routes:
         - id: demo-service
-          uri: lb://DEMO-SERVICE
+          uri: lb://demo-service
           predicates:
             - Path=/demo/**
 
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka-server:8761/eureka
-
-  instance:
-    prefer-ip-address: true
+      defaultZone: http://eureka:8761/eureka
