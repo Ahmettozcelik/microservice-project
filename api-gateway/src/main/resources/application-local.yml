@@ -4,10 +4,9 @@ spring:
       discovery:
         locator:
           enabled: true
-
       routes:
         - id: demo-service
-          uri: lb://DEMO-SERVICE
+          uri: lb://demo-service
           predicates:
             - Path=/demo/**
 

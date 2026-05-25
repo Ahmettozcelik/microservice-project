@@ -1,6 +1,12 @@
 version: '3.8'
 
 services:
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+
   eureka-server:
     build: ./eureka-server
     ports:
@@ -27,6 +33,17 @@ services:
       - eureka-server
       - config-server
 
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka-server
+      - config-server
+      - mongo
+
   api-gateway:
     build: ./api-gateway
     ports:
@@ -37,3 +54,4 @@ services:
       - eureka-server
       - config-server
       - demo-service
+      - auth-service
