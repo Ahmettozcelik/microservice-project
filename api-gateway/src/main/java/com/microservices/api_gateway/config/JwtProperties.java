@@ -1,4 +1,4 @@
-package com.microservices.api_gateway.filter;
+package com.microservices.api_gateway.config;
 
 import lombok.Getter;
 import lombok.Setter;
