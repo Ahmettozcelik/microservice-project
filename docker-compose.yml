@@ -22,6 +22,11 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - eureka-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   demo-service:
     build: ./demo-service
@@ -30,8 +35,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
-      - eureka-server
-      - config-server
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
 
   auth-service:
     build: ./auth-service
@@ -40,9 +47,12 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
-      - eureka-server
-      - config-server
-      - mongo
+      eureka-server:
+        condition: service_started
+      mongo:
+        condition: service_started
+      config-server:
+        condition: service_healthy
 
   api-gateway:
     build: ./api-gateway
@@ -51,7 +61,11 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
-      - eureka-server
-      - config-server
-      - demo-service
-      - auth-service
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
+      demo-service:
+        condition: service_started
+      auth-service:
+        condition: service_started
