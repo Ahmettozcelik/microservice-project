@@ -6,6 +6,7 @@ import com.microservices.auth_service.dto.RegisterRequest;
 import com.microservices.auth_service.model.User;
 import com.microservices.auth_service.model.Role;
 import com.microservices.auth_service.repository.UserRepository;
+import com.microservices.auth_service.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public String register(RegisterRequest request) {
 
@@ -29,9 +31,7 @@ public class AuthService {
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
-
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-
         user.setRole(Role.valueOf(request.getRole().toUpperCase()));
         user.setCreatedAt(LocalDateTime.now());
 
@@ -49,7 +49,7 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        String token = "TEMP_TOKEN"; //
+        String token = jwtService.generateToken(user);
 
         return new AuthResponse(token, user.getRole().name());
     }

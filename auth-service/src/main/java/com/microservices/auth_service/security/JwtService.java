@@ -4,9 +4,11 @@ import com.microservices.auth_service.config.JwtProperties;
 import com.microservices.auth_service.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Service
@@ -14,6 +16,11 @@ import java.util.Date;
 public class JwtService {
 
     private final JwtProperties jwtProperties;
+
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = jwtProperties.getSecret().getBytes();
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
     public String generateToken(User user) {
 
@@ -23,7 +30,7 @@ public class JwtService {
                 .claim("userId", user.getId())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpiration()))
-                .signWith(SignatureAlgorithm.HS256, jwtProperties.getSecret())
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 }
